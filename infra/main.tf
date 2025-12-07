@@ -67,7 +67,8 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
 # ECR Repositories
 # --------------------------
 resource "aws_ecr_repository" "backend" {
-  name = "devops-backend"
+  name                 = "devops-backend"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -75,7 +76,8 @@ resource "aws_ecr_repository" "backend" {
 }
 
 resource "aws_ecr_repository" "frontend" {
-  name = "devops-frontend"
+  name                 = "devops-frontend"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -86,14 +88,14 @@ resource "aws_ecr_repository" "frontend" {
 # ALB
 # --------------------------
 resource "aws_lb" "app_alb" {
-  name               = "devops-app-alb"
+  name               = "devops-app-alb-2"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = module.vpc.public_subnets
 }
 
 resource "aws_security_group" "alb_sg" {
-  name        = "alb-sg"
+  name        = "alb-sg-2"
   description = "Allow inbound traffic"
   vpc_id      = module.vpc.vpc_id
 
@@ -117,7 +119,7 @@ resource "aws_security_group" "alb_sg" {
 # Security Group for ECS Tasks
 # --------------------------
 resource "aws_security_group" "ecs_tasks_sg" {
-  name        = "ecs-tasks-sg"
+  name        = "ecs-tasks-sg-2"
   description = "Allow traffic from ALB to ECS tasks"
   vpc_id      = module.vpc.vpc_id
 
@@ -151,7 +153,7 @@ resource "aws_security_group" "ecs_tasks_sg" {
 # Target Groups for Frontend & Backend
 # --------------------------
 resource "aws_lb_target_group" "frontend_tg" {
-  name        = "devops-frontend-tg"
+  name        = "devops-frontend-tg-2"
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
