@@ -64,6 +64,25 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
 }
 
 # --------------------------
+# ECR Repositories
+# --------------------------
+resource "aws_ecr_repository" "backend" {
+  name = "devops-backend"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+resource "aws_ecr_repository" "frontend" {
+  name = "devops-frontend"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+# --------------------------
 # ALB
 # --------------------------
 resource "aws_lb" "app_alb" {

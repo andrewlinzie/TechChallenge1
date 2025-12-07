@@ -1,12 +1,13 @@
 pipeline {
     agent any
 
-    environment {
-        AWS_REGION    = "us-east-2"
-        ACCOUNT_ID    = "899631475351"
-        BACKEND_REPO  = "${899631475351}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-backend"
-        FRONTEND_REPO = "${899631475351}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-frontend"
-    }
+environment {
+    AWS_REGION    = "us-east-2"
+    ACCOUNT_ID    = "899631475351"
+
+    BACKEND_REPO  = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-backend"
+    FRONTEND_REPO = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-frontend"
+}
 
     stages {
 
