@@ -170,7 +170,7 @@ resource "aws_lb_target_group" "frontend_tg" {
 }
 
 resource "aws_lb_target_group" "backend_tg" {
-  name        = "devops-backend-tg"
+  name        = "devops-backend-tg-2"
   port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
