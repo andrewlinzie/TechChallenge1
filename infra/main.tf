@@ -197,7 +197,7 @@ resource "aws_lb_listener_rule" "backend_rule" {
 
   condition {
     path_pattern {
-      values = ["/api/*"]
+      values = ["/api", "/api/*"]
     }
   }
 }
