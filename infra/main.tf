@@ -90,14 +90,14 @@ resource "aws_ecr_repository" "frontend" {
 # ALB
 # --------------------------
 resource "aws_lb" "app_alb" {
-  name               = "devops-app-alb-2"
+  name_prefix       = "dvalb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = module.vpc.public_subnets
 }
 
 resource "aws_security_group" "alb_sg" {
-  name        = "alb-sg-2"
+  name_prefix        = "alb-sg"
   description = "Allow inbound traffic"
   vpc_id      = module.vpc.vpc_id
 
@@ -121,7 +121,7 @@ resource "aws_security_group" "alb_sg" {
 # Security Group for ECS Tasks
 # --------------------------
 resource "aws_security_group" "ecs_tasks_sg" {
-  name        = "ecs-tasks-sg-2"
+  name_prefix        = "ecs-tasks-sg"
   description = "Allow traffic from ALB to ECS tasks"
   vpc_id      = module.vpc.vpc_id
 
@@ -155,7 +155,7 @@ resource "aws_security_group" "ecs_tasks_sg" {
 # Target Groups for Frontend & Backend
 # --------------------------
 resource "aws_lb_target_group" "frontend_tg" {
-  name        = "devops-frontend-tg-2"
+  name_prefix        = "devops-frontend-tg"
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
@@ -172,7 +172,7 @@ resource "aws_lb_target_group" "frontend_tg" {
 }
 
 resource "aws_lb_target_group" "backend_tg" {
-  name        = "devops-backend-tg-2"
+  name_prefix        = "devops-backend-tg"
   port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
