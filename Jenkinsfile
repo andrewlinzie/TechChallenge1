@@ -63,7 +63,7 @@ environment {
                 withAWS(credentials: 'aws-devops-creds', region: "${AWS_REGION}") {
                     dir('infra') {
                         sh '''
-                            terraform init -input=false
+                            terraform init 
                             terraform apply -auto-approve \
                                -var="backend_image=$BACKEND_REPO:latest" \
                                -var="frontend_image=$FRONTEND_REPO:latest"
