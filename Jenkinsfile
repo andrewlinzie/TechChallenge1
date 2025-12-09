@@ -1,13 +1,13 @@
 pipeline {
     agent any
 
-environment {
-    AWS_REGION    = "us-east-2"
-    ACCOUNT_ID    = "899631475351"
+    environment {
+        AWS_REGION    = "us-east-2"
+        ACCOUNT_ID    = "899631475351"
 
-    BACKEND_REPO  = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-backend"
-    FRONTEND_REPO = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-frontend"
-}
+        BACKEND_REPO  = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-backend"
+        FRONTEND_REPO = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/devops-frontend"
+    }
 
     stages {
 
@@ -43,12 +43,11 @@ environment {
             steps {
                 sh '''
                     cd frontend
-                    docker build --no-cache -t devops-frontend:latest .
-                 docker tag devops-frontend:latest $FRONTEND_REPO:latest
+                    docker build --build-arg CACHE_BREAK=$(date +%s) -t devops-frontend:latest .
+                    docker tag devops-frontend:latest $FRONTEND_REPO:latest
                 '''
             }
         }
-
 
         stage('Push Images to ECR') {
             steps {
@@ -64,10 +63,13 @@ environment {
                 withAWS(credentials: 'aws-devops-creds', region: "${AWS_REGION}") {
                     dir('infra') {
                         sh '''
+                            DEPLOY_ID=$(date +%s)
+
                             terraform init -reconfigure
                             terraform apply -auto-approve \
                                -var="backend_image=$BACKEND_REPO:latest" \
-                               -var="frontend_image=$FRONTEND_REPO:latest"
+                               -var="frontend_image=$FRONTEND_REPO:latest" \
+                               -var="deploy_id=$DEPLOY_ID"
                         '''
                     }
                 }

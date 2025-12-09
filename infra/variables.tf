@@ -1,19 +1,17 @@
-variable "account_id" {
-  type        = string
-  description = "AWS Account ID"
-}
-
 variable "region" {
-  type        = string
-  description = "AWS Region"
+  type    = string
+  default = "us-east-2"
 }
 
 variable "backend_image" {
-  type        = string
-  description = "Full ECR image URL for backend"
+  type = string
 }
 
 variable "frontend_image" {
-  type        = string
-  description = "Full ECR image URL for frontend"
+  type = string
+}
+
+# 👇 This is the key that forces a new ECS Task Definition revision
+variable "deploy_id" {
+  type = string
 }

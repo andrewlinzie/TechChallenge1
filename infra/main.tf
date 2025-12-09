@@ -15,6 +15,10 @@ terraform {
   }
 }
 
+provider "aws" {
+  region = var.region
+}
+
 # --------------------------
 # VPC + Networking
 # --------------------------
@@ -90,15 +94,14 @@ resource "aws_ecr_repository" "frontend" {
 # ALB
 # --------------------------
 resource "aws_lb" "app_alb" {
-  name_prefix        = "alb"        # VALID (<6 chars)
+  name_prefix        = "alb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = module.vpc.public_subnets
 }
 
 resource "aws_security_group" "alb_sg" {
-  name_prefix = "albsg"             # VALID (<6 chars)
-  description = "Allow inbound traffic"
+  name_prefix = "albsg"
   vpc_id      = module.vpc.vpc_id
 
   ingress {
@@ -118,11 +121,10 @@ resource "aws_security_group" "alb_sg" {
 }
 
 # --------------------------
-# Security Group for ECS Tasks
+# ECS Task Security Group
 # --------------------------
 resource "aws_security_group" "ecs_tasks_sg" {
-  name_prefix = "ecssg"              # VALID (<6 chars)
-  description = "Allow traffic from ALB to ECS tasks"
+  name_prefix = "ecssg"
   vpc_id      = module.vpc.vpc_id
 
   ingress {
@@ -150,38 +152,38 @@ resource "aws_security_group" "ecs_tasks_sg" {
 }
 
 # --------------------------
-# Target Groups (Frontend / Backend)
+# Target Groups
 # --------------------------
 resource "aws_lb_target_group" "frontend_tg" {
-  name_prefix = "fntg"               # VALID (<=6)
+  name_prefix = "fntg"
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = module.vpc.vpc_id
 
   health_check {
-    path                = "/"
-    matcher             = "200-399"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
+    path              = "/"
+    matcher           = "200-399"
+    interval          = 30
+    timeout           = 5
+    healthy_threshold = 2
     unhealthy_threshold = 2
   }
 }
 
 resource "aws_lb_target_group" "backend_tg" {
-  name_prefix = "bktg"               # VALID (<=6)
+  name_prefix = "bktg"
   port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = module.vpc.vpc_id
 
   health_check {
-    path                = "/"
-    matcher             = "200-399"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
+    path              = "/"
+    matcher           = "200-399"
+    interval          = 30
+    timeout           = 5
+    healthy_threshold = 2
     unhealthy_threshold = 2
   }
 }
@@ -201,7 +203,7 @@ resource "aws_lb_listener" "http" {
 }
 
 # --------------------------
-# Backend Listener Rule
+# Backend Routing Rule
 # --------------------------
 resource "aws_lb_listener_rule" "backend_rule" {
   listener_arn = aws_lb_listener.http.arn
@@ -247,9 +249,6 @@ resource "aws_ecs_task_definition" "backend" {
   ])
 }
 
-# --------------------------
-# Backend ECS Service
-# --------------------------
 resource "aws_ecs_service" "backend" {
   name            = "devops-backend-service"
   cluster         = aws_ecs_cluster.this.id
@@ -268,10 +267,6 @@ resource "aws_ecs_service" "backend" {
     container_name   = "backend"
     container_port   = 8080
   }
-
-  depends_on = [
-    aws_lb_listener.http
-  ]
 }
 
 # --------------------------
@@ -298,13 +293,18 @@ resource "aws_ecs_task_definition" "frontend" {
           protocol      = "tcp"
         }
       ]
+
+      # 👇 Forces new ECS task definition revision every deploy
+      environment = [
+        {
+          name  = "DEPLOY_ID"
+          value = var.deploy_id
+        }
+      ]
     }
   ])
 }
 
-# --------------------------
-# Frontend ECS Service
-# --------------------------
 resource "aws_ecs_service" "frontend" {
   name            = "devops-frontend-service"
   cluster         = aws_ecs_cluster.this.id
@@ -323,8 +323,4 @@ resource "aws_ecs_service" "frontend" {
     container_name   = "frontend"
     container_port   = 80
   }
-
-  depends_on = [
-    aws_lb_listener.http
-  ]
 }
