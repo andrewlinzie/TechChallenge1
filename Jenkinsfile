@@ -43,11 +43,12 @@ environment {
             steps {
                 sh '''
                     cd frontend
-                    docker build --build-arg CACHE_BREAK=$(date +%s) -t devops-frontend:latest .
-                    docker tag devops-frontend:latest $FRONTEND_REPO:latest
+                    docker build --no-cache -t devops-frontend:latest .
+                 docker tag devops-frontend:latest $FRONTEND_REPO:latest
                 '''
             }
         }
+
 
         stage('Push Images to ECR') {
             steps {
