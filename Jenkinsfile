@@ -43,7 +43,7 @@ environment {
             steps {
                 sh '''
                     cd frontend
-                    docker build -t devops-frontend:latest .
+                    docker build --build-arg CACHE_BREAK=$(date +%s) -t devops-frontend:latest .
                     docker tag devops-frontend:latest $FRONTEND_REPO:latest
                 '''
             }
