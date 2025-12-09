@@ -69,8 +69,8 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
 # ECR Repositories
 # --------------------------
 resource "aws_ecr_repository" "backend" {
-  name                 = "devops-backend"
-  force_delete         = true
+  name         = "devops-backend"
+  force_delete = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -78,8 +78,8 @@ resource "aws_ecr_repository" "backend" {
 }
 
 resource "aws_ecr_repository" "frontend" {
-  name                 = "devops-frontend"
-  force_delete         = true
+  name         = "devops-frontend"
+  force_delete = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -90,14 +90,14 @@ resource "aws_ecr_repository" "frontend" {
 # ALB
 # --------------------------
 resource "aws_lb" "app_alb" {
-  name_prefix       = "dvalb"
+  name_prefix        = "alb"        # VALID (<6 chars)
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = module.vpc.public_subnets
 }
 
 resource "aws_security_group" "alb_sg" {
-  name_prefix        = "alb-sg"
+  name_prefix = "albsg"             # VALID (<6 chars)
   description = "Allow inbound traffic"
   vpc_id      = module.vpc.vpc_id
 
@@ -121,11 +121,10 @@ resource "aws_security_group" "alb_sg" {
 # Security Group for ECS Tasks
 # --------------------------
 resource "aws_security_group" "ecs_tasks_sg" {
-  name_prefix        = "ecs-tasks-sg"
+  name_prefix = "ecssg"              # VALID (<6 chars)
   description = "Allow traffic from ALB to ECS tasks"
   vpc_id      = module.vpc.vpc_id
 
-  # Allow HTTP traffic from ALB to frontend (port 80)
   ingress {
     from_port       = 80
     to_port         = 80
@@ -134,7 +133,6 @@ resource "aws_security_group" "ecs_tasks_sg" {
     description     = "Allow HTTP from ALB to frontend"
   }
 
-  # Allow HTTP traffic from ALB to backend (port 8080)
   ingress {
     from_port       = 8080
     to_port         = 8080
@@ -152,10 +150,10 @@ resource "aws_security_group" "ecs_tasks_sg" {
 }
 
 # --------------------------
-# Target Groups for Frontend & Backend
+# Target Groups (Frontend / Backend)
 # --------------------------
 resource "aws_lb_target_group" "frontend_tg" {
-  name_prefix        = "devops-frontend-tg"
+  name_prefix = "fntg"               # VALID (<=6)
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
@@ -172,14 +170,14 @@ resource "aws_lb_target_group" "frontend_tg" {
 }
 
 resource "aws_lb_target_group" "backend_tg" {
-  name_prefix        = "devops-backend-tg"
+  name_prefix = "bktg"               # VALID (<=6)
   port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = module.vpc.vpc_id
 
   health_check {
-    path                = "/" # adjust later if your backend health path is different
+    path                = "/"
     matcher             = "200-399"
     interval            = 30
     timeout             = 5
@@ -216,7 +214,7 @@ resource "aws_lb_listener_rule" "backend_rule" {
 
   condition {
     path_pattern {
-      values = ["/api/*"]   
+      values = ["/api/*"]
     }
   }
 }
@@ -228,8 +226,8 @@ resource "aws_ecs_task_definition" "backend" {
   family                   = "devops-backend"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256" # 0.25 vCPU
-  memory                   = "512" # 0.5 GB
+  cpu                      = "256"
+  memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
 
   container_definitions = jsonencode([
