@@ -1,4 +1,10 @@
 terraform {
+  backend "s3" {
+    bucket  = "andrew-tf-state-devops"
+    key     = "devops-challenge/terraform.tfstate"
+    region  = "us-east-2"
+  }
+
   required_version = ">= 1.5.0"
 
   required_providers {
@@ -7,10 +13,6 @@ terraform {
       version = "~> 5.0"
     }
   }
-}
-
-provider "aws" {
-  region = var.region
 }
 
 # --------------------------
