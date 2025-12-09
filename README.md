@@ -1,59 +1,230 @@
-# Overview
-This repository contains a React frontend, and an Express backend that the frontend connects to.
+# 🚀 AWS DevOps Pipeline — Full CI/CD with Jenkins, Terraform, ECS Fargate & ALB
 
-# Objective
-Deploy the frontend and backend to somewhere publicly accessible over the internet. The AWS Free Tier should be more than sufficient to run this project, but you may use any platform and tooling you'd like for your solution.
+This project demonstrates a **production-grade DevOps pipeline** built on AWS, using:
 
-Fork this repo as a base. You may change any code in this repository to suit the infrastructure you build in this code challenge.
+- **Jenkins** (CI/CD automation running in Docker on EC2)
+- **Terraform** (IaC for AWS provisioning)
+- **Amazon ECR** (container registry)
+- **Amazon ECS Fargate** (container orchestration)
+- **Application Load Balancer (ALB)** (traffic routing)
+- **Docker** (containerization of frontend + backend apps)
+- **GitHub** (source control + pipeline triggers)
 
-# Submission
-1. A github repo that has been forked from this repo with all your code.
-2. Modify this README file with instructions for:
-* Any tools needed to deploy your infrastructure
-* All the steps needed to repeat your deployment process
-* URLs to the your deployed frontend.
+The pipeline automatically:
 
-# Evaluation
-You will be evaluated on the ease to replicate your infrastructure. This is a combination of quality of the instructions, as well as any scripts to automate the overall setup process.
+1. Pulls code from GitHub  
+2. Builds Docker images for both frontend (React + NGINX) and backend (Node/Express)  
+3. Tags & pushes images to Amazon ECR  
+4. Executes `terraform apply` to deploy new versions to ECS Fargate  
+5. Updates ALB target groups with healthy running containers  
 
-# Setup your environment
-Install nodejs. Binaries and installers can be found on nodejs.org.
-https://nodejs.org/en/download/
+This is a **portfolio-quality project** demonstrating Cloud Engineering, DevOps, CI/CD, IaC, containerization, and AWS infrastructure design.
 
-For macOS or Linux, Nodejs can usually be found in your preferred package manager.
-https://nodejs.org/en/download/package-manager/
+---
 
-Depending on the Linux distribution, the Node Package Manager `npm` may need to be installed separately.
+## 🏗️ **Architecture Overview**
 
-# Running the project
-The backend and the frontend will need to run on separate processes. The backend should be started first.
-```
-cd backend
-npm ci
-npm start
-```
-The backend should response to a GET request on `localhost:8080`.
+```text
+GitHub → Jenkins (EC2 + Docker) → ECR → Terraform → ECS Fargate → ALB → Users
 
-With the backend started, the frontend can be started.
-```
-cd frontend
-npm ci
-npm start
-```
-The frontend can be accessed at `localhost:3000`. If the frontend successfully connects to the backend, a message saying "SUCCESS" followed by a guid should be displayed on the screen.  If the connection failed, an error message will be displayed on the screen.
+---
 
-# Configuration
-The frontend has a configuration file at `frontend/src/config.js` that defines the URL to call the backend. This URL is used on `frontend/src/App.js#12`, where the front end will make the GET call during the initial load of the page.
+Flow Breakdown:
+- Developer pushes code → GitHub triggers Jenkins.
+- Jenkins builds Docker images, pushes to ECR.
+- Jenkins runs Terraform to update ECS task definitions.
+- ECS pulls images from ECR and deploys new tasks.
+- ALB routes traffic to healthy frontend + backend tasks.
 
-The backend has a configuration file at `backend/config.js` that defines the host that the frontend will be calling from. This URL is used in the `Access-Control-Allow-Origin` CORS header, read in `backend/index.js#14`
+---
 
-# Optional Extras
-The core requirement for this challenge is to get the provided application up and running for consumption over the public internet. That being said, there are some opportunities in this code challenge to demonstrate your skill sets that are above and beyond the core requirement.
+📦 Technologies Used
+🛠 DevOps & CI/CD
+- Jenkins (Pipeline-as-Code)
+- Docker
+- SSH + GitHub Integration
 
-A few examples of extras for this coding challenge:
-1. Dockerizing the application
-2. Scripts to set up the infrastructure
-3. Providing a pipeline for the application deployment
-4. Running the application in a serverless environment
+☁️ AWS Infrastructure
+- ECS Fargate
+- ECR
+- Application Load Balancer (ALB)
+- VPC (subnets, route tables, SGs)
+- IAM Roles
+- CloudWatch (optional logs)
 
-This is not an exhaustive list of extra features that could be added to this code challenge. At the end of the day, this section is for you to demonstrate any skills you want to show that’s not captured in the core requirement.
+⚙️ IaC
+- Terraform (v1.x)
+- terraform-aws-vpc module
+
+💻 Application Stack
+- Frontend: React → built → served by NGINX
+- Backend: Node.js / Express
+- Dockerized microservices
+
+---
+
+📁 Project Structure
+.
+├── backend/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/...
+├── frontend/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/...
+├── infra/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+├── Jenkinsfile
+└── README.md
+
+---
+
+🚀 Deployment Pipeline (Jenkinsfile Summary)
+
+The pipeline:
+1. Checks out code
+2. Logs into Amazon ECR
+3. Builds Docker images
+4. Tags & pushes images to ECR
+5. Runs Terraform
+6. Deploys to ECS
+
+Snippet:
+stage('Deploy to ECS via Terraform') {
+    steps {
+        withAWS(credentials: 'aws-devops-creds', region: "${AWS_REGION}") {
+            dir('infra') {
+                sh '''
+                    terraform init -input=false
+                    terraform apply -auto-approve \
+                      -var="backend_image=$BACKEND_REPO:latest" \
+                      -var="frontend_image=$FRONTEND_REPO:latest"
+                '''
+            }
+        }
+    }
+}
+
+---
+
+🌐 Accessing the App
+
+After deployment, Terraform outputs:
+
+    alb_dns_name = http://<alb-generated-dns>
+
+Front-end loads at the root path:
+
+    http://<ALB_DNS>
+
+Backend reachable at:
+
+    http://<ALB_DNS>/api/
+
+---
+
+🧪 Local Development
+
+Backend:
+
+    cd backend
+    npm install
+    npm start
+
+Frontend:
+
+    cd frontend
+    npm install
+    npm start
+
+---
+
+⚠️ TEARDOWN GUIDE (Prevent Extra AWS Charges)
+
+When you’re done using this project YOU MUST TEARDOWN ALL RESOURCES, otherwise AWS will continue billing you for:
+- ECS Fargate tasks
+- ALB hourly charges
+- EC2 instance running Jenkins
+- ECR image storage
+- VPC resources
+
+🛑 STEP 1 — Destroy Terraform Infrastructure
+
+From your laptop or local machine:
+
+    cd infra
+
+    terraform destroy \
+    -var="backend_image=<your-backend-ecr-uri>:latest" \
+    -var="frontend_image=<your-frontend-ecr-uri>:latest"
+
+
+Confirm with yes when prompted.
+
+This deletes:
+- ECS cluster
+- Task definitions
+- Services
+- ALB + listeners + target groups
+- VPC & subnets
+- IAM roles created by Terraform
+
+---
+
+🛑 STEP 2 — Terminate Jenkins EC2 Server
+
+In AWS console:
+1. Go to EC2 → Instances
+2. Select your jenkins-server
+3. Click Instance state → Terminate
+4. Confirm termination
+
+This stops:
+- EC2 hourly billing
+- EBS volume charges
+
+---
+
+🛑 STEP 3 — Delete ECR Repositories (Optional)
+
+If you no longer need the images:
+
+    aws ecr delete-repository --repository-name devops-backend --force --region us-east-1
+    aws ecr delete-repository --repository-name devops-frontend --force --region us-east-1
+
+
+--force removes images inside.
+
+---
+
+🛑 STEP 4 — Delete Unused IAM Roles (If Not Managed by Terraform)
+
+Go to:
+AWS Console → IAM → Roles
+
+Delete roles created manually (but keep AWS service roles).
+
+---
+
+🛑 STEP 5 — Release Elastic IP (Optional)
+
+If you want to avoid charges
+1. EC2 → Elastic IPs
+2. Select the EIP used by Jenkins
+3. Click Release Elastic IP
+
+---
+
+🎉 Final Result
+
+You have built a full production-grade CI/CD system:
+- Automated build + deployment pipeline
+- ECS microservices architecture
+- ALB routing with health checks
+- Infrastructure-as-Code through Terraform
+- Dockerized modern application
+
+This project is now portfolio-ready and interview-ready.
